@@ -18,13 +18,19 @@
         <script type="text/javascript" src="d3/d3.v3.js"></script>
     </head>
     <body>
+
         <script type="text/javascript">
         var colors = ["blue","green","red"];
         var w = 600;
         var h = 400;
         var margin = 30;
-        var svg = d3.select("body").append("svg");
-
+        var oauthToken;
+        var url;
+        var id;
+        var loaded=0;
+        function csvPresent(content)
+        {
+            var svg = d3.select("body").append("svg");
             var dataset = {};
             var xs = [];
             var ys = [];
@@ -32,16 +38,16 @@
             var yTitle = "";
             var labels = [];
             var circles =[];
-        svg.attr("width",w).attr("height",h);
-        svg.append("clipPath")
-            .attr("id","chart-area")
-            .append("rect")
-            .attr("x",margin)
-            .attr("y",margin)
-            .attr("width",w-margin*3)
-            .attr("height",h-margin*2);
-        d3.csv("data/data.csv", function(error,data) {
-            data.forEach(function(d) {
+            svg.attr("width",w).attr("height",h);
+            svg.append("clipPath")
+                .attr("id","chart-area")
+                .append("rect")
+                .attr("x",margin)
+                .attr("y",margin)
+                .attr("width",w-margin*3)
+                .attr("height",h-margin*2);
+            console.log(content);
+            d3.csv.parse(content).forEach(function(d) {
                 var label = "series-1";
                 var size = 3;
                 if(d.hasOwnProperty("label")) {
@@ -88,7 +94,64 @@
             var yAxis = d3.svg.axis().scale(yScale).orient("left").ticks(5);
             svg.append("g").attr("class","x axis").attr("transform", "translate(0," + (h-margin)+")").call(xAxis);
             svg.append("g").attr("class","y axis").attr("transform", "translate(" + margin+",0)").call(yAxis);
-        });
-         </script>
+        }
+        function requestCallback(file) {
+            console.log(file);
+            if (file.downloadUrl) {
+                var accessToken = gapi.auth.getToken().access_token;
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', file.downloadUrl);
+                xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+                xhr.onload = function() {
+                    csvPresent(xhr.responseText);
+                };
+                xhr.onerror = function() {
+                  csvPresent(null);
+                };
+                xhr.send();
+          } else {
+            csvPresent(null);
+          }
+        }
+        function pickerCallback(data) {
+            if (data.action == google.picker.Action.PICKED) {
+                id = data.docs[0].id;
+                console.log(id);
+                var request = gapi.client.drive.files.get({'fileId': id});
+                request.execute(requestCallback);
+            }
+        }
+        function createPicker() {
+            var picker = new google.picker.PickerBuilder()
+                .addView(new google.picker.DocsUploadView())
+                .addView(new google.picker.DocsView())
+                .setOAuthToken(oauthToken)
+                .setDeveloperKey('AIzaSyBgeLO2xv7-6LNXEG8QiDqOIn8_GfO5eSA')
+                .setCallback(pickerCallback)
+                .build();
+            picker.setVisible(true);
+        }
+        function handleAuthResult(authResult) {
+            if(authResult && !authResult.error) {
+                oauthToken = authResult.access_token;
+                createPicker();
+            }
+        }
+        function onAuthApiLoad() {
+            window.gapi.auth.authorize({'client_id': '776123885003-rh1cv2kib980cj3rj8vqm2ee2vlamblu',
+            'scope': ['https://www.googleapis.com/auth/drive']},handleAuthResult);
+        }
+        function onApiLoad () {
+            if (loaded <1) {loaded++; return;}
+            gapi.load('auth', {'callback': onAuthApiLoad});
+            gapi.load('picker');
+        }
+        function onClientLoad() {
+            gapi.client.setApiKey('AIzaSyBgeLO2xv7-6LNXEG8QiDqOIn8_GfO5eSA');
+            gapi.client.load('drive','v2',onApiLoad);
+        }
+        </script>
+        <script type="text/javascript" src="https://apis.google.com/js/api.js?onload=onApiLoad"></script>
+        <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=onClientLoad"></script>
     </body>
 </html>
