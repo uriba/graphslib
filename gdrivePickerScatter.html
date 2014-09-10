@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <style type="text/css">
+            .axis path,
+            .axis line {
+                fill: none;
+                stroke: black;
+                shape-rendering: crispEdges;
+            }
+            .axis text {
+                font-family: sans-serif;
+                font-size: 11px;
+            }
+        </style>
+        <title>Scatter Plot</title>
+        <script type="text/javascript" src="d3/d3.v3.js"></script>
+        <script type="text/javascript" src="scatter.js"></script>
+    </head>
+    <body>
+
+        <script type="text/javascript">
+        function requestCallback(file) {
+            console.log(file);
+            if (file.downloadUrl) {
+                var accessToken = gapi.auth.getToken().access_token;
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', file.downloadUrl);
+                xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+                xhr.onload = function() {
+                    csvPresent(xhr.responseText);
+                };
+                xhr.onerror = function() {
+                  csvPresent(null);
+                };
+                xhr.send();
+          } else {
+            csvPresent(null);
+          }
+        }
+        function pickerCallback(data) {
+            if (data.action == google.picker.Action.PICKED) {
+                id = data.docs[0].id;
+                console.log(id);
+                var request = gapi.client.drive.files.get({'fileId': id});
+                request.execute(requestCallback);
+            }
+        }
+        function createPicker() {
+            var picker = new google.picker.PickerBuilder()
+                .addView(new google.picker.DocsUploadView())
+                .addView(new google.picker.DocsView())
+                .setOAuthToken(oauthToken)
+                .setDeveloperKey('AIzaSyBgeLO2xv7-6LNXEG8QiDqOIn8_GfO5eSA')
+                .setCallback(pickerCallback)
+                .build();
+            picker.setVisible(true);
+        }
+        function handleAuthResult(authResult) {
+            if(authResult && !authResult.error) {
+                oauthToken = authResult.access_token;
+                createPicker();
+            }
+        }
+        function onAuthApiLoad() {
+            window.gapi.auth.authorize({'client_id': '776123885003-rh1cv2kib980cj3rj8vqm2ee2vlamblu',
+            'scope': ['https://www.googleapis.com/auth/drive']},handleAuthResult);
+        }
+        function onApiLoad () {
+            if (loaded <1) {loaded++; return;}
+            gapi.load('auth', {'callback': onAuthApiLoad});
+            gapi.load('picker');
+        }
+        function onClientLoad() {
+            gapi.client.setApiKey('AIzaSyBgeLO2xv7-6LNXEG8QiDqOIn8_GfO5eSA');
+            gapi.client.load('drive','v2',onApiLoad);
+        }
+        </script>
+        <script type="text/javascript" src="https://apis.google.com/js/api.js?onload=onApiLoad"></script>
+        <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=onClientLoad"></script>
+    </body>
+</html>
