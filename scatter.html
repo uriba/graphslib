@@ -50,11 +50,15 @@
             d3.csv.parse(content).forEach(function(d) {
                 var label = "series-1";
                 var size = 3;
+                var caption = "";
                 if(d.hasOwnProperty("label")) {
                     label = d.label;
                 }
                 if(! d.hasOwnProperty("size")) {
                     d["size"] = size;
+                }
+                if(! d.hasOwnProperty("caption")) {
+                    d["caption"] = caption;
                 }
                 if(dataset.hasOwnProperty(label)) {
                     dataset[label].push(d);
@@ -88,7 +92,25 @@
                 .attr("cx",function(d) {return xScale(d[xTitle]);})
                 .attr("cy",function(d) {return yScale(d[yTitle]);})
                 .attr("r",function(d) {return d.size;})
-                .attr("fill",colors[i]);
+                .attr("fill",colors[i])
+                .on("mouseover",function(d) {
+                    var me = d3.select(this);
+                    var xPos = parseFloat(me.attr("cx"));
+                    var yPos = parseFloat(me.attr("cy"));
+                    svg.append("text")
+                        .attr("id","tooltip")
+                        .attr("x",xPos)
+                        .attr("y",yPos)
+                        .attr("text-anchor","middle")
+                        .attr("font-family","sans-serif")
+                        .attr("font-size","11px")
+                        .attr("font-weight","bold")
+                        .attr("fill","black")
+                        .text("(" + d[xTitle] + "," + d[yTitle] + ") - " + d.caption);
+                })
+                .on("mouseout",function() {
+                    d3.select("#tooltip").remove();
+                });
             });
             var xAxis = d3.svg.axis().scale(xScale).orient("bottom").ticks(5);
             var yAxis = d3.svg.axis().scale(yScale).orient("left").ticks(5);
