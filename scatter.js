@@ -92,7 +92,7 @@ function csvPresent(content)
             var me = d3.select(this);
             var xPos = parseFloat(me.attr("cx"));
             var yPos = parseFloat(me.attr("cy"));
-            svg.append("text")
+            svg.select(".plot").append("text")
                 .attr("id","tooltip")
                 .attr("x",xPos)
                 .attr("y",yPos)
