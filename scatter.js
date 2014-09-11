@@ -51,8 +51,10 @@ function csvPresent(content)
         console.log("zoom");
         svg.select(".x.axis").call(xAxis);
         svg.select(".y.axis").call(yAxis);
-        svg.select(".plot")
-            .attr("transform","translate(" + d3.event.translate +")scale("+d3.event.scale+")");
+        svg.select("#tooltip").remove();
+        svg.selectAll("circle")
+            .attr("cx",function(d) {return xScale(d[xTitle]);})
+            .attr("cy",function(d) {return yScale(d[yTitle]);});
     }
 
     var zoom = d3.behavior.zoom().x(xScale).y(yScale).scaleExtent([1,10]).on("zoom",zoom);
