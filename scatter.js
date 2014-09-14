@@ -1,4 +1,4 @@
-var colors = ["blue","green","red"];
+var colors = ["blue","green","red","cyan","magenta","yellow"];
 var w = 600;
 var h = 400;
 var margin = 40;
@@ -10,6 +10,7 @@ var xScale;
 var yScale;
 var xAxis;
 var yAxis;
+var zoom;
 function csvPresent(content)
 {
     var dataset = {};
@@ -43,11 +44,10 @@ function csvPresent(content)
     yScale = d3.scale.linear()
             .domain([d3.min(ys),d3.max(ys)*1.1])
             .range([h-margin,margin]);
-
     xAxis = d3.svg.axis().scale(xScale).orient("bottom").ticks(5);
     yAxis = d3.svg.axis().scale(yScale).orient("left").ticks(5);
 
-    function zoom() {
+    function zooming() {
         svg.select(".x.axis").transition().ease("linear").call(xAxis);
         svg.select(".y.axis").transition().ease("linear").call(yAxis);
         svg.select("#tooltip").remove();
@@ -57,7 +57,7 @@ function csvPresent(content)
             .attr("cy",function(d) {return yScale(d[yTitle]);});
     }
 
-    var zoom = d3.behavior.zoom().x(xScale).y(yScale).scaleExtent([1,10]).on("zoom",zoom);
+    zoom = d3.behavior.zoom().x(xScale).y(yScale).scaleExtent([0.1,100]).on("zoom",zooming);
     var svg = d3.select("body").append("svg").attr("width",w).attr("height",h).attr("id","mainSVG").append("g").call(zoom).append("g");
     svg.append("clipPath")
         .attr("id","chart-area")
@@ -79,6 +79,19 @@ function csvPresent(content)
         .selectAll("g").data(labels).enter()
         .append("g")
         .attr("id",function(label) {return label;})
+    svg.append("text")
+        .attr("id","zoom-reset")
+        .attr("text-anchor","end")
+        .attr("font-family","sans-serif")
+        .attr("font-size","11px")
+        .attr("x",w*0.95)
+        .attr("y",14)
+        .text("reset zoom")
+        .on("click",function() {
+            zoom.translate([0,0]).scale(1);
+            zooming();
+        });
+
 
 
     circles = svg.select("#circles");
