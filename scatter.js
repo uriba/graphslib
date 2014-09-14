@@ -48,17 +48,17 @@ function csvPresent(content)
     yAxis = d3.svg.axis().scale(yScale).orient("left").ticks(5);
 
     function zoom() {
-        console.log("zoom");
-        svg.select(".x.axis").call(xAxis);
-        svg.select(".y.axis").call(yAxis);
+        svg.select(".x.axis").transition().ease("linear").call(xAxis);
+        svg.select(".y.axis").transition().ease("linear").call(yAxis);
         svg.select("#tooltip").remove();
-        svg.selectAll("circle")
+        d3.select("#tooltip-bg").remove();
+        svg.selectAll("circle").transition().ease("linear")
             .attr("cx",function(d) {return xScale(d[xTitle]);})
             .attr("cy",function(d) {return yScale(d[yTitle]);});
     }
 
     var zoom = d3.behavior.zoom().x(xScale).y(yScale).scaleExtent([1,10]).on("zoom",zoom);
-    var svg = d3.select("body").append("svg").attr("width",w).attr("height",h).append("g").call(zoom).append("g");
+    var svg = d3.select("body").append("svg").attr("width",w).attr("height",h).attr("id","mainSVG").append("g").call(zoom).append("g");
     svg.append("clipPath")
         .attr("id","chart-area")
         .append("rect")
@@ -89,12 +89,15 @@ function csvPresent(content)
         .attr("cx",function(d) {return xScale(d[xTitle]);})
         .attr("cy",function(d) {return yScale(d[yTitle]);})
         .attr("fill",colors[i])
+        .attr("stroke","black")
+        .attr("stroke-width",2)
         .on("click",function(d) {
             d3.select("#tooltip").remove();
+            d3.select("#tooltip-bg").remove();
             var me = d3.select(this);
             var xPos = parseFloat(me.attr("cx"));
             var yPos = parseFloat(me.attr("cy"));
-            svg.select(".plot").append("text")
+            var tooltipText = svg.select(".plot").append("text")
                 .attr("id","tooltip")
                 .attr("x",xPos)
                 .attr("y",yPos)
@@ -104,6 +107,17 @@ function csvPresent(content)
                 .attr("font-weight","bold")
                 .attr("fill","black")
                 .text("(" + d[xTitle] + "," + d[yTitle] + ") - " + d.caption);
+            var rect = tooltipText[0][0].getBBox();
+            var tooltipBackground = svg.select(".plot").insert("rect","#tooltip")
+                .attr("id","tooltip-bg")
+                .attr("x",rect.x)
+                .attr("y",rect.y)
+                .attr("width",rect.width)
+                .attr("height",rect.height)
+                .attr("fill","yellow")
+                .attr("stroke","gray")
+                .attr("stroke-width",2);
+            //svg.insertBefore(tooltipBackground,tooltipText);
         })
     });
     svg.append("text")
